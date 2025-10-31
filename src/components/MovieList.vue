@@ -2,11 +2,23 @@
 import { onMounted } from "vue";
 import { useMovies } from "@/composables/useMovies";
 
-const { movies, loading, error, fetchMovies } = useMovies();
+const { movies, loading, error, fetchMovies, currentPage, totalPages } =
+  useMovies();
 
 onMounted(() => {
   fetchMovies(""); // initial load
 });
+
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value) return;
+  fetchMovies("", page);
+}
+
+function jumpToPage(offset: number) {
+  const targetPage = currentPage.value + offset;
+  if (targetPage < 1 || targetPage > totalPages.value) return;
+  fetchMovies("", targetPage);
+}
 </script>
 
 <template>
@@ -30,6 +42,42 @@ onMounted(() => {
         <div class="movie-year">{{ movie.Year }}</div>
         <div class="movie-id">{{ movie.imdbID }}</div>
       </div>
+    </div>
+
+    <div class="pagination">
+      <button
+        class="pagination__btn"
+        @click="jumpToPage(-10)"
+        :disabled="currentPage <= 10"
+      >
+        &laquo;
+      </button>
+      <button
+        class="pagination__btn"
+        :disabled="currentPage === 1 || loading"
+        @click="goToPage(currentPage - 1)"
+      >
+        < Prev
+      </button>
+
+      <div class="pagination__info">
+        Page {{ currentPage }} of {{ totalPages }}
+      </div>
+
+      <button
+        class="pagination__btn"
+        :disabled="currentPage === totalPages || loading"
+        @click="goToPage(currentPage + 1)"
+      >
+        Next >
+      </button>
+      <button
+        class="pagination__btn"
+        @click="jumpToPage(10)"
+        :disabled="currentPage + 10 > totalPages"
+      >
+        &raquo;
+      </button>
     </div>
   </section>
 </template>
@@ -98,6 +146,40 @@ onMounted(() => {
   }
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  &__btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #1e4fd8;
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
+
+  &__info {
+    font-weight: 500;
+    color: #444;
+  }
+}
+
 /* 📱 Responsive layout */
 @media (max-width: 600px) {
   .movie-table {
@@ -127,6 +209,11 @@ onMounted(() => {
         color: #888;
       }
     }
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>
