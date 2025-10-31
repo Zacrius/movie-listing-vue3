@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useMovies } from "@/composables/useMovies";
+import SearchBar from "@/components/SearchBar.vue";
 
 const { movies, loading, error, fetchMovies, currentPage, totalPages } =
   useMovies();
+
+const searchQuery = ref("");
+
+function handleSearch(query: string) {
+  searchQuery.value = query;
+  fetchMovies(query, 1); // reset to page 1 on new search
+}
 
 onMounted(() => {
   fetchMovies(""); // initial load
@@ -11,19 +19,21 @@ onMounted(() => {
 
 function goToPage(page: number) {
   if (page < 1 || page > totalPages.value) return;
-  fetchMovies("", page);
+  fetchMovies(searchQuery.value || "", page);
 }
 
 function jumpToPage(offset: number) {
   const targetPage = currentPage.value + offset;
   if (targetPage < 1 || targetPage > totalPages.value) return;
-  fetchMovies("", targetPage);
+  fetchMovies(searchQuery.value || "", targetPage);
 }
 </script>
 
 <template>
   <section class="movie-list">
     <h2>🎬 Movie Listing</h2>
+
+    <SearchBar @search="handleSearch" />
 
     <div v-if="loading">Loading movies...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
